@@ -40,6 +40,11 @@ namespace roomfyChat
 
                     await botClient.SendMessage(message.Chat.Id, "Готовий розпочати реєстрацію?", replyMarkup: keyBord);
                 }
+                else if (message.Text.ToLower().Contains("так!"))
+                {
+                    await botClient.SendMessage(message.Chat.Id, "Введіть місто у якому хочете шукати людей анонімно", replyMarkup: new ReplyKeyboardRemove());
+                    Console.WriteLine("реєстрація");
+                }
             }
         }
 
