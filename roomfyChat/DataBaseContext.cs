@@ -64,13 +64,12 @@ namespace roomfyChat
         {
             try
             {
-                string insertQwery = "INSER INTO Users (user_id, oblasty, games, idea) VALUES (@user_id, @oblasty, @games, @idea)";
-                // написать переменную найденай игры
+                string insertQwery = "INSER INTO Users (user_id, oblasty, games, idea) VALUES (@user_id, @oblasty, @idea)";
+
                 using (var command = new SqliteCommand(insertQwery, connection))
                 {
                     command.Parameters.AddWithValue("@user_id", chatId);
                     command.Parameters.AddWithValue("@oblasty", oblast);
-                    command.Parameters.AddWithValue("games", game);// переписать переменную
                     command.Parameters.AddWithValue("idea", infoReaded);
                 }
             }
@@ -80,7 +79,88 @@ namespace roomfyChat
             }
         }
 
-        //написать методы 1. для поиска конкретной игры 2. написать метод для вывода мисива информации о играх
+        //написать методы 1. для поиска конкретной игры
+        public int GetGameIdWithName(string gameName)
+        {
+            try
+            {
+                string selectQwery = "SELECT game_id FROM Games WHERE game_name = @game_name";
+                using (var command = new SqliteCommand(selectQwery, connection))
+                {
+                    command.Parameters.AddWithValue("@game_name", gameName);
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            return reader.GetInt32(0);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Помилка{ex.Message}");
+            }
+
+            return -1;
+        }
+
+
+        //2. написать методы для вывода мисива информации о играх и метод для вывода масива названий игр
+
+        public string ShowDiscriptionGame(string gameName)
+        {
+            try
+            {
+                string selectQwery = "SELECT discription FROM Games WHERE game_name = @game_name";
+
+                using (var command = new SqliteCommand(selectQwery, connection))
+                {
+                    command.Parameters.AddWithValue("@game_name", gameName);
+
+                    using(var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            return reader["discription"].ToString() ?? string.Empty;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Помилка{ex.Message}");
+            }
+
+            return string.Empty;
+        }
+
+        public string[] GetGameName()
+        {
+            List<string> titles = new List<string>();
+
+            try
+            {
+                string selectQwery = "SELECT titles FROM Games";
+
+                using (var command = new SqliteCommand(selectQwery, connection))
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        titles.Add(reader["titles"].ToString() ?? "0");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Помилка{ex.Message}");
+            }
+
+            return titles.ToArray();
+        }
+
 
         public void CloseConection()
         {
