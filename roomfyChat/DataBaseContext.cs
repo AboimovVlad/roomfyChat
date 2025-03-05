@@ -79,7 +79,6 @@ namespace roomfyChat
             }
         }
 
-        //написать методы 1. для поиска конкретной игры
         public int GetGameIdWithName(string gameName)
         {
             try
@@ -106,8 +105,6 @@ namespace roomfyChat
             return -1;
         }
 
-
-        //2. написать методы для вывода мисива информации о играх и метод для вывода масива названий игр
 
         public string ShowDiscriptionGame(string gameName)
         {
