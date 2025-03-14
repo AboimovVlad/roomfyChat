@@ -55,11 +55,11 @@ namespace roomfyChat
 
                         await botClient.SendMessage(message.Chat.Id, "Готовий розпочати реєстрацію?", replyMarkup: keyBord);
                     }
-                    else if (message.Text.Contains("Так!") && dbContext.searchResult)
+                    else if (message.Text.ToLower().Contains("так"))
                     {
                         await StartRegistration(botClient, message);
 
-                        Console.WriteLine("реєстрація");
+                        Console.WriteLine("yes");
                     }
                 }
             }
@@ -105,7 +105,10 @@ namespace roomfyChat
         {
             registrationState[message.Chat.Id] = "oblast";
 
-            await botClient.SendMessage(message.Chat.Id, "Реєстарція розпочата");
+            await botClient.SendMessage(message.Chat.Id, "Реєстарція розпочата",  replyMarkup: new ReplyKeyboardRemove());
+
+            await Registration(botClient, message);
+
         }
 
         private static async Task Registration(ITelegramBotClient botClient, Message message)
