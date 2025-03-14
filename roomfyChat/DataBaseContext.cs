@@ -60,7 +60,7 @@ namespace roomfyChat
             }
         }
 
-        public void AddNewUser(long chatId, string oblast, string game, bool infoReaded)
+        public void AddNewUser(long chatId, string oblast, bool infoReaded)
         {
             try
             {
