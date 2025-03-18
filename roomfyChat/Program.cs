@@ -9,7 +9,28 @@ namespace roomfyChat
     class Program
     {
         private static Dictionary<long, string> registrationState = new Dictionary<long, string>();
+        private static Dictionary<long, int> userSlideIndex = new(); 
+        private static string[] slides =
+        {
+            "Roomfy Chat - це місце, де ти можеш спілкуватися анонімно або знаходити нових друзів поруч, грати в ігри " +
+                "та отримувати нагороди за активності",
+            "Тепер давай поговоримо про систему накопичення балів: " +
+                "у кожного користувача є дві гри, одна за замовчуванням, друга даєсться випадково. Граючи в ігри буде фіксованний " +
+                "рахунок, який узгоджують гравці. Кількість перемог кожного гравця = кількості балів." +
+                "Приклад: гравці грали до 5 перемог. Гравець 1: переміг 2 рази, гравець 2: переміг 3 рази, таким чином гравець 1 отримав 2 бали," +
+                " гравець 2 отримав 3 бали за свої перемоги",
+            "Також поговоримо про те як накопичуються бонуси:" +
+                "Бонуси накопичуються так само як і бали, тільки бали даються за ігри, а бонуси нараховуються за час проведений у розмові." +
+                "Тобто коли гравець починає розмову з новим користувачем, програма запускає таймер. За кожну хвилину розмови користувачам " +
+                "буде нараховуватись 0,2 бонуси, таким чином якщо користувачи пророзмовляють 5 хвилин, вони отримають оддин бонус.",
+            "Бонуси та бали потібні для того щоб було можна придбати додаткові ігри, яких нема у гравця",
+            "Ти пройшов весь шлях! Дякую за увагу! Та сподіваюсь що вам стало більш зрозуміло, як користуватися моїм інтерфейсом"
+        };
+
         private static DataBaseContext dbContext = new DataBaseContext();
+        private static RegistrationData registrationData = new RegistrationData();
+        
+        private static Message? newMessageId;
 
         internal static void Main(string[] args)
         {
@@ -24,13 +45,15 @@ namespace roomfyChat
         {
             var message = update.Message;
 
+            if (update.Type == UpdateType.CallbackQuery)
+            {
+                await HandleCallbackQuery(botClient, update.CallbackQuery);
+                return;
+            }
+
             if (registrationState.ContainsKey(message.Chat.Id))
             {
                 await Registration(botClient, message);
-            }
-            else if (update.Type == UpdateType.CallbackQuery)
-            {
-                await HandleCallbackQuery(botClient, update.CallbackQuery);
             }
             else
             {
@@ -69,24 +92,63 @@ namespace roomfyChat
         {
             try
             {
-                // Получаем данные из кнопки
+                if (callbackQuery?.Message == null) return;
+
+                var messageId = callbackQuery.Message.MessageId;
+                var chatId = callbackQuery.Message.Chat.Id;
                 var callbackData = callbackQuery.Data;
 
-                // Обрабатываем выбор области
-                string regionName = callbackData switch
+                Console.WriteLine(callbackData);
+
+                if (registrationState.TryGetValue(chatId, out string value))
                 {
-                    "poltava" => "Полтавська область",
-                    "kyiv" => "Київська область",
-                    "kharkiv" => "Харківська область",
-                    "lviv" => "Львівська область",
-                    "vinnytsia" => "Вінницька область",
-                    _ => "Невідома область"
-                };
+                    if (value == "oblast")
+                    {
+                        string regionName = callbackData switch
+                        {
+                            "poltava" => "Полтавська область",
+                            "kyiv" => "Київська область",
+                            "kharkiv" => "Харківська область",
+                            "lviv" => "Львівська область",
+                            "vinnytsia" => "Вінницька область",
+                            _ => "Невідома область"
+                        };
 
-                // Отправляем ответ пользователю
-                await botClient.SendMessage(callbackQuery.Message.Chat.Id, $"Ви обрали {regionName}!");
+                        registrationState[chatId] = "readInfo";
+                        registrationData.oblast = callbackData ?? "none";
 
-                // Отвечаем на callbackQuery (новый способ)
+                        await botClient.SendMessage(chatId, $"Ви обрали {regionName}!");
+
+                        await botClient.DeleteMessage(chatId, messageId);
+
+                        await Registration(botClient, callbackQuery.Message);
+                    }
+                    else if (value == "readInfo")
+                    {
+                        if (callbackData == "next")
+                        {
+                            if (!userSlideIndex.ContainsKey(chatId))
+                                userSlideIndex[chatId] = 0;
+
+                            userSlideIndex[chatId]++;
+
+                            await SendSlides(botClient, chatId, newMessageId.MessageId);
+                        }
+                        else if (callbackData == "true")
+                        {
+                            registrationData.infoReaded = true;
+
+                            await botClient.SendMessage(chatId, "Дякую що прочитав мої правила та ідею");
+                        }
+                        else if (callbackData == "false")
+                        {
+                            registrationData.infoReaded = false;
+
+                            await botClient.SendMessage(chatId, "Я вам через деякий час напам'ятаю прочитати мої правила та ідею в цілому");
+                        }
+                    }
+                }
+
                 await botClient.AnswerCallbackQuery(callbackQuery.Id);
             }
             catch (Exception ex)
@@ -95,6 +157,20 @@ namespace roomfyChat
             }
         }
 
+        private static async Task SendSlides(ITelegramBotClient botClient, long chatId, int messageId)
+        {
+            int index = userSlideIndex[chatId];
+
+            var inlineKeyboard = new InlineKeyboardMarkup(new[]
+            {
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("далі", "next")
+                }
+             });
+
+            await botClient.EditMessageText(chatId, messageId, slides[index], replyMarkup: inlineKeyboard);
+        }
 
         private static async Task error(ITelegramBotClient client, Exception exception, HandleErrorSource source, CancellationToken token)
         {
@@ -104,6 +180,7 @@ namespace roomfyChat
         private static async Task StartRegistration(ITelegramBotClient botClient, Message message)
         {
             registrationState[message.Chat.Id] = "oblast";
+            registrationData.userId = message.Chat.Id;
 
             await botClient.SendMessage(message.Chat.Id, "Реєстарція розпочата",  replyMarkup: new ReplyKeyboardRemove());
 
@@ -118,7 +195,7 @@ namespace roomfyChat
                 if (value == "oblast")
                 {
                     var inlineKeyboard = new InlineKeyboardMarkup(new[]
-{
+                    {
                         new[]
                         {
                             InlineKeyboardButton.WithCallbackData("Полтавська", "poltava"),
@@ -138,6 +215,23 @@ namespace roomfyChat
                     await botClient.SendMessage(message.Chat.Id,
                         "Оберіть область у якій хочеш позпочати анонімні знайомства: ",
                         replyMarkup: inlineKeyboard);
+                }
+                else if (value == "readInfo")
+                {
+                    userSlideIndex[message.Chat.Id] = 0;
+
+                    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+                    {
+                        new[]
+                        {
+                            InlineKeyboardButton.WithCallbackData("далі", "next"),
+                            InlineKeyboardButton.WithCallbackData("Я прочитаю піздніше", "false")
+                        }
+                    });
+
+                    newMessageId = await botClient.SendMessage(message.Chat.Id,
+                                                                slides[0],
+                                                                replyMarkup: inlineKeyboard);
                 }
             }
         }
