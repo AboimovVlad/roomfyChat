@@ -14,7 +14,7 @@ namespace roomfyChat
 
         public DataBaseContext()
         {
-            string dbPath = @"D:\проекти C#\AboimovVlad\roomfyChat\roomfyChat\roomfyDB.db";
+            string dbPath = @"roomfyDB.db";
 
             connection = new SqliteConnection($"Data Source={dbPath}");
 
@@ -60,17 +60,23 @@ namespace roomfyChat
             }
         }
 
-        public void AddNewUser(long chatId, string oblast, bool infoReaded)
+        public void AddNewUser(RegistrationData regData)
         {
+            Console.WriteLine($"message from db context\t user id: {regData.userId}" +
+                                $" oblast: {regData.oblast}" +
+                                $" info: {regData.infoReaded}");
+
             try
             {
-                string insertQwery = "INSER INTO Users (user_id, oblasty, games, idea) VALUES (@user_id, @oblasty, @idea)";
+                string insertQwery = "INSERT INTO Users (user_id, oblasty, idea) VALUES (@user_id, @oblasty, @idea)";
 
                 using (var command = new SqliteCommand(insertQwery, connection))
                 {
-                    command.Parameters.AddWithValue("@user_id", chatId);
-                    command.Parameters.AddWithValue("@oblasty", oblast);
-                    command.Parameters.AddWithValue("idea", infoReaded);
+                    command.Parameters.AddWithValue("@user_id", regData.userId);
+                    command.Parameters.AddWithValue("@oblasty", regData.oblast);
+                    command.Parameters.AddWithValue("@idea", regData.infoReaded);
+
+                    command.ExecuteNonQuery();
                 }
             }
             catch (Exception ex)
