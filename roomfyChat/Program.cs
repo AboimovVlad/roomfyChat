@@ -64,31 +64,34 @@ namespace roomfyChat
 
                     if (message.Text.ToLower().Contains("start"))
                     {
-                        await botClient.SendMessage(message.Chat.Id, "Привіт👋\nЯ Roomfy Chat і я готовий вам допомгти знайти нових друзів");
+                        await botClient.SendMessage(message.Chat.Id,
+                                                    "Привіт👋\nЯ Roomfy Chat і я готовий вам допомгти знайти нових друзів");
 
                         dbContext.SearchUserRegistration(message.Chat.Id.ToString());
 
-                        var keyBord = new ReplyKeyboardMarkup(new[]
-                        {
-                            new KeyboardButton[] {"Так!"}
-                        })
-                        {
-                            ResizeKeyboard = true,
-                            OneTimeKeyboard = false
-                        };
-
-                        if (message.Text.ToLower().Contains("так") && dbContext.searchResult)
+                        if (dbContext.searchResult)
                         {
                             await botClient.SendMessage(message.Chat.Id,
-                                                        "Ти вже зареєстрований",
-                                                        replyMarkup: new ReplyKeyboardRemove());
+                                                        "Ти вже зареєстрований");
 
                             dbContext.CloseConection();
 
                             return;
                         }
+                        else
+                        {
+                            var keyBord = new ReplyKeyboardMarkup(new[]
+                            {
+                                new KeyboardButton[] {"Так!"}
+                            })
+                            {
+                                ResizeKeyboard = true,
+                                OneTimeKeyboard = false
+                            };
 
-                        await botClient.SendMessage(message.Chat.Id, "Готовий розпочати реєстрацію?", replyMarkup: keyBord);
+
+                            await botClient.SendMessage(message.Chat.Id, "Готовий розпочати реєстрацію?", replyMarkup: keyBord);
+                        }
                     }
                     else if (message.Text.ToLower().Contains("так") && dbContext.searchResult == false)
                     {
