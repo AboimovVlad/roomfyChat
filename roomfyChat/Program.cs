@@ -170,6 +170,9 @@ namespace roomfyChat
                         {
                             registrationData.infoReaded = false;
 
+                            dbContext.AddNewUser(registrationData);
+                            dbContext.CloseConection();
+
                             await botClient.SendMessage(chatId, "Я вам через деякий час напам'ятаю прочитати мої правила та ідею в цілому");
                         }
                     }
