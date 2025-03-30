@@ -58,6 +58,8 @@ namespace roomfyChat
             {
                 var dbContext = new DataBaseContext();
 
+                dbContext.SearchUserRegistration(message.Chat.Id.ToString());
+
                 if (message?.Text != null)
                 {
                     Console.WriteLine($"user: {message.Chat.Id} {message.Chat.FirstName ?? "No Name"} : {message.Text}");
@@ -66,8 +68,6 @@ namespace roomfyChat
                     {
                         await botClient.SendMessage(message.Chat.Id,
                                                     "Привіт👋\nЯ Roomfy Chat і я готовий вам допомгти знайти нових друзів");
-
-                        dbContext.SearchUserRegistration(message.Chat.Id.ToString());
 
                         if (dbContext.searchResult)
                         {
