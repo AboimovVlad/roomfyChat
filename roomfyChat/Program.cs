@@ -173,6 +173,7 @@ namespace roomfyChat
                             dbContext.AddNewUser(registrationData);
                             dbContext.CloseConection();
 
+                            await botClient.DeleteMessage(chatId, newMessageId.MessageId);
                             await botClient.SendMessage(chatId, "Я вам через деякий час напам'ятаю прочитати мої правила та ідею в цілому");
                         }
                     }
