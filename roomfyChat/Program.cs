@@ -28,6 +28,7 @@ namespace roomfyChat
         };
 
         private static RegistrationData registrationData = new RegistrationData();
+        private static AnonimChatLogic anonimChat = new AnonimChatLogic();
         
         private static Message? newMessageId;
 
