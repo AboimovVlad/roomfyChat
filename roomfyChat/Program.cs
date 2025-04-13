@@ -26,6 +26,15 @@ namespace roomfyChat
             "Бонуси та бали потібні для того щоб було можна придбати додаткові ігри, яких нема у гравця",
             "Ти пройшов весь шлях! Дякую за увагу! Та сподіваюсь що вам стало більш зрозуміло, як користуватися моїм інтерфейсом"
         };
+        private static ReplyKeyboardMarkup menuMarkup = new ReplyKeyboardMarkup(new[]
+                            {
+                                new KeyboardButton[] {"Моя статистика"},
+                                new KeyboardButton[] {"Розпочати чат", "Магазин"}
+                            })
+                            {
+                                ResizeKeyboard = true,
+                                OneTimeKeyboard = false
+                            };
 
         private static RegistrationData registrationData = new RegistrationData();
         private static AnonimChatLogic anonimChat = new AnonimChatLogic();
@@ -55,6 +64,14 @@ namespace roomfyChat
             {
                 await Registration(botClient, message);
             }
+            else if (anonimChat.IsUserWaiting(message))
+            {
+                await botClient.SendMessage(message.Chat.Id, "Ти в кімнаті очікування");
+            }
+            else if (anonimChat.IsUserInChat(message))
+            {
+                await anonimChat.SendMessagePartner(botClient, message);
+            }
             else
             {
                 var dbContext = new DataBaseContext();
@@ -73,7 +90,8 @@ namespace roomfyChat
                         if (dbContext.searchResult)
                         {
                             await botClient.SendMessage(message.Chat.Id,
-                                                        "Ти вже зареєстрований");
+                                                        "Ти вже зареєстрований",
+                                                        replyMarkup: menuMarkup);
 
                             dbContext.CloseConection();
 
@@ -101,6 +119,14 @@ namespace roomfyChat
                         dbContext.CloseConection();
 
                         Console.WriteLine("started registration");
+                    }
+                    else if (message.Text.ToLower().Contains("розпочати чат"))
+                    {
+                        await anonimChat.AddNewChat(botClient, message);
+                    }
+                    else
+                    {
+                        await botClient.SendMessage(message.Chat.Id, "Я не розумію такої команди");
                     }
                 }
             }
@@ -165,7 +191,9 @@ namespace roomfyChat
                             dbContext.CloseConection();
 
                             await botClient.DeleteMessage(chatId, newMessageId.MessageId);
-                            await botClient.SendMessage(chatId, "Дякую що прочитав мої правила та ідею");
+                            await botClient.SendMessage(chatId,
+                                                        "Дякую що прочитав мої правила та ідею",
+                                                        replyMarkup: menuMarkup);
                         }
                         else if (callbackData == "false")
                         {
@@ -175,7 +203,10 @@ namespace roomfyChat
                             dbContext.CloseConection();
 
                             await botClient.DeleteMessage(chatId, newMessageId.MessageId);
-                            await botClient.SendMessage(chatId, "Я вам через деякий час напам'ятаю прочитати мої правила та ідею в цілому");
+                            await botClient.SendMessage(chatId,
+                                                        "Я вам через деякий час напам'ятаю прочитати" +
+                                                        " мої правила та ідею в цілому",
+                                                        replyMarkup: menuMarkup);
                         }
                     }
                 }
@@ -198,7 +229,7 @@ namespace roomfyChat
                 {
                     new[]
                     {
-                        InlineKeyboardButton.WithCallbackData("дякую, що ознайомив мене з ціею інформаціею!", "true")
+                        InlineKeyboardButton.WithCallbackData("дякую, що ознайомив мене\n з ціею інформаціею!", "true")
                     }
                 });
 

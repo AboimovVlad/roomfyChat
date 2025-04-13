@@ -20,7 +20,7 @@ namespace roomfyChat
             Console.WriteLine($"пользователь в комнате ожидания: {message.Chat.Id}");
         }
 
-        public bool IsUserWiting(Message message)
+        public bool IsUserWaiting(Message message)
         {
             var list = dbRedis.ListRange("waitingRoom");
 
@@ -53,7 +53,105 @@ namespace roomfyChat
                 await botClient.SendMessage(userId, "Ви підключидися до чату, починайте розмовляти або грати в ігри");
                 await botClient.SendMessage((long)waitingUserId, "Ви залишили кімнату очікування та доєналися до чату," +
                                                                     " починайте розмовляти або грати в ігри");
+
+                Console.WriteLine("чат создан");
             }
+        }
+
+        public bool IsUserInChat(Message message)
+        {
+            var userId = message.Chat.Id;
+
+            return dbRedis.HashExists("anonimChats", userId);
+        }
+
+        public async Task SendMessagePartner(ITelegramBotClient botClient, Message message)
+        {
+            var userId = message.Chat.Id;
+            var partnerId = dbRedis.HashGet("anonimChats", userId);
+
+            try
+            {
+                if (message.Text.ToLower().Contains("/leavroom"))
+                {
+                    await LeavTheChat(botClient, message);
+                    return;
+                }
+
+                switch (message.Type)
+                {
+                    case MessageType.Text:
+                        await botClient.SendMessage((long)partnerId, message.Text ?? "Exeption");
+                        Console.WriteLine($"сообщение отравлено от {message.Chat.LastName}: {message.Text}");
+
+                        break;
+
+                    case MessageType.Photo:
+                        var photo = message.Photo[^1];
+
+                        await botClient.SendPhoto((long)partnerId, InputFile.FromFileId(photo.FileId));
+                        Console.WriteLine($"сообщение отравлено от {message.Chat.LastName}: Photo");
+
+                        break;
+
+                    case MessageType.Voice:
+                        var voice = message.Voice;
+
+                        await botClient.SendVoice((long)partnerId, InputFile.FromFileId(voice.FileId));
+                        Console.WriteLine($"сообщение отравлено от {message.Chat.LastName}: Voice");
+
+                        break;
+
+                    case MessageType.Video:
+                        var video = message.Video;
+
+                        await botClient.SendVideo((long)partnerId, InputFile.FromFileId(video.FileId));
+                        Console.WriteLine($"сообщение отравлено от {message.Chat.LastName}: Video");
+
+                        break;
+
+                    case MessageType.Sticker:
+                        var sticker = message.Sticker;
+
+                        await botClient.SendSticker((long)partnerId, InputFile.FromFileId(sticker.FileId));
+                        Console.WriteLine($"сообщение отравлено от {message.Chat.LastName}: Sticker");
+
+                        break;
+
+                    case MessageType.Animation:
+                        var gif = message.Animation;
+
+                        await botClient.SendAnimation((long)partnerId, InputFile.FromFileId(gif.FileId));
+                        Console.WriteLine($"сообщение отравлено от {message.Chat.LastName}: GIF");
+
+                        break;
+
+                    default:
+                        await botClient.SendMessage(userId, "Я не можу передавати такий тип файлу\n" +
+                                                            "можу передати тільки: 1) фото;\n" +
+                                                            "2) видео;\n" +
+                                                            "3) голосові\n;" +
+                                                            "4) стікери\n" +
+                                                            "5) гифки");
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка: {ex.Message}");
+            }
+        }
+
+        private async Task LeavTheChat(ITelegramBotClient botClient, Message message)
+        {
+            var userId = message.Chat.Id;
+            var partnerId = dbRedis.HashGet("anonimChats", userId);
+
+            dbRedis.HashDelete("anonimChats", userId);
+            dbRedis.HashDelete("anonimChats", partnerId);
+
+            await botClient.SendMessage(userId, "Ви закінчили співрозмову");
+            await botClient.SendMessage((long)partnerId, "Ваш співрозмовник закінчив розмову за вами");
         }
     }
 }
