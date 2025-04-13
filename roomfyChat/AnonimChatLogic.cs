@@ -72,7 +72,7 @@ namespace roomfyChat
 
             try
             {
-                if (message.Text.ToLower().Contains("/leavroom"))
+                if (message.Type == MessageType.Text && message.Text.ToLower().Contains("/leavroom"))
                 {
                     await LeavTheChat(botClient, message);
                     return;
@@ -89,7 +89,7 @@ namespace roomfyChat
                     case MessageType.Photo:
                         var photo = message.Photo[^1];
 
-                        await botClient.SendPhoto((long)partnerId, InputFile.FromFileId(photo.FileId));
+                        await botClient.SendPhoto((long)partnerId, InputFile.FromFileId(photo.FileId.ToString()));
                         Console.WriteLine($"сообщение отравлено от {message.Chat.LastName}: Photo");
 
                         break;
@@ -97,7 +97,7 @@ namespace roomfyChat
                     case MessageType.Voice:
                         var voice = message.Voice;
 
-                        await botClient.SendVoice((long)partnerId, InputFile.FromFileId(voice.FileId));
+                        await botClient.SendVoice((long)partnerId, InputFile.FromFileId(voice.FileId.ToString()));
                         Console.WriteLine($"сообщение отравлено от {message.Chat.LastName}: Voice");
 
                         break;
@@ -105,7 +105,7 @@ namespace roomfyChat
                     case MessageType.Video:
                         var video = message.Video;
 
-                        await botClient.SendVideo((long)partnerId, InputFile.FromFileId(video.FileId));
+                        await botClient.SendVideo((long)partnerId, InputFile.FromFileId(video.FileId.ToString()));
                         Console.WriteLine($"сообщение отравлено от {message.Chat.LastName}: Video");
 
                         break;
@@ -113,7 +113,7 @@ namespace roomfyChat
                     case MessageType.Sticker:
                         var sticker = message.Sticker;
 
-                        await botClient.SendSticker((long)partnerId, InputFile.FromFileId(sticker.FileId));
+                        await botClient.SendSticker((long)partnerId, InputFile.FromFileId(sticker.FileId.ToString()));
                         Console.WriteLine($"сообщение отравлено от {message.Chat.LastName}: Sticker");
 
                         break;
@@ -121,7 +121,7 @@ namespace roomfyChat
                     case MessageType.Animation:
                         var gif = message.Animation;
 
-                        await botClient.SendAnimation((long)partnerId, InputFile.FromFileId(gif.FileId));
+                        await botClient.SendAnimation((long)partnerId, InputFile.FromFileId(gif.FileId.ToString()));
                         Console.WriteLine($"сообщение отравлено от {message.Chat.LastName}: GIF");
 
                         break;
