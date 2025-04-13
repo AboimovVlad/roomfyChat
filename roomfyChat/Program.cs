@@ -190,6 +190,8 @@ namespace roomfyChat
                             dbContext.AddNewUser(registrationData);
                             dbContext.CloseConection();
 
+                            registrationState.Remove(chatId);
+
                             await botClient.DeleteMessage(chatId, newMessageId.MessageId);
                             await botClient.SendMessage(chatId,
                                                         "Дякую що прочитав мої правила та ідею",
@@ -201,6 +203,8 @@ namespace roomfyChat
 
                             dbContext.AddNewUser(registrationData);
                             dbContext.CloseConection();
+
+                            registrationState.Remove(chatId);
 
                             await botClient.DeleteMessage(chatId, newMessageId.MessageId);
                             await botClient.SendMessage(chatId,
@@ -229,7 +233,7 @@ namespace roomfyChat
                 {
                     new[]
                     {
-                        InlineKeyboardButton.WithCallbackData("дякую, що ознайомив мене\n з ціею інформаціею!", "true")
+                        InlineKeyboardButton.WithCallbackData("дякую, що ознайомив мене", "true")
                     }
                 });
 
