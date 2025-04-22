@@ -16,7 +16,7 @@ namespace roomfyChat
         {
             dbRedis.ListLeftPush("waitingRoom", message.Chat.Id);
 
-            await botClient.SendMessage(message.Chat.Id, "Ви в кімнаті очікування");
+            await botClient.SendMessage(message.Chat.Id, "Ви в кімнаті очікування. Щоб вийти з кімнати напиши /leavWaiting");
             Console.WriteLine($"пользователь в комнате ожидания: {message.Chat.Id}");
         }
 
@@ -50,9 +50,11 @@ namespace roomfyChat
                     new HashEntry(waitingUserId, userId)
                 });
 
-                await botClient.SendMessage(userId, "Ви підключидися до чату, починайте розмовляти або грати в ігри");
+                await botClient.SendMessage(userId, "Ви підключидися до чату, починайте розмовляти або грати в ігри." +
+                                                        " Натисни щоб вийти з чату /leavRoom");
                 await botClient.SendMessage((long)waitingUserId, "Ви залишили кімнату очікування та доєналися до чату," +
-                                                                    " починайте розмовляти або грати в ігри");
+                                                                    " починайте розмовляти або грати в ігри." +
+                                                                    " Натисни щоб вийти з чату /leavRoom");
 
                 Console.WriteLine("чат создан");
             }
@@ -152,6 +154,15 @@ namespace roomfyChat
 
             await botClient.SendMessage(userId, "Ви закінчили співрозмову");
             await botClient.SendMessage((long)partnerId, "Ваш співрозмовник закінчив розмову за вами");
+        }
+
+        public async Task LeavWaitingRoom(ITelegramBotClient botClient, Message message)
+        {
+            var useId = message.Chat.Id;
+
+            dbRedis.ListRemove("waitingRoom", useId, 1);
+
+            await botClient.SendMessage(useId, "Ви залишили кімнату очікування");
         }
     }
 }
