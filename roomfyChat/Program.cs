@@ -151,7 +151,7 @@ namespace roomfyChat
 
                 Console.WriteLine(callbackData);
 
-                if (registrationState.TryGetValue(chatId, out string value))
+                if (registrationState.TryGetValue(chatId, out string? value))
                 {
                     if (value == "oblast")
                     {
@@ -259,7 +259,7 @@ namespace roomfyChat
             }
         }
 
-        private static async Task error(ITelegramBotClient client, Exception exception, HandleErrorSource source, CancellationToken token)
+        private static Task error(ITelegramBotClient client, Exception exception, HandleErrorSource source, CancellationToken token)
         {
             throw new NotImplementedException();
         }
@@ -277,7 +277,7 @@ namespace roomfyChat
 
         private static async Task Registration(ITelegramBotClient botClient, Message message)
         {
-            if (registrationState.TryGetValue(message.Chat.Id, out string value))
+            if (registrationState.TryGetValue(message.Chat.Id, out string? value))
             {
                 if (value == "oblast")
                 {

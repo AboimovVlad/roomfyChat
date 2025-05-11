@@ -79,6 +79,10 @@ namespace roomfyChat
                     await LeavTheChat(botClient, message);
                     return;
                 }
+                else if(message.Type == MessageType.Text && message.Text.ToLower().Contains("/starttictactoe"))
+                {
+
+                }
 
                 switch (message.Type)
                 {
@@ -131,10 +135,10 @@ namespace roomfyChat
                     default:
                         await botClient.SendMessage(userId, "Я не можу передавати такий тип файлу\n" +
                                                             "можу передати тільки: 1) фото;\n" +
-                                                            "2) видео;\n" +
+                                                            "2) відео;\n" +
                                                             "3) голосові\n;" +
                                                             "4) стікери\n" +
-                                                            "5) гифки");
+                                                            "5) гіфки");
                         break;
                 }
             }
