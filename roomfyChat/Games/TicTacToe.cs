@@ -15,7 +15,7 @@ namespace roomfyChat.Games
         private static ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("localhost:6379");
         private static IDatabase dbRedis = redis.GetDatabase();
 
-        private static RebbitService _rebbitService;
+        private readonly RebbitService? _rebbitService;
 
         private static InlineKeyboardMarkup playingField = new InlineKeyboardMarkup(new[]
         {
@@ -39,7 +39,7 @@ namespace roomfyChat.Games
             }
         });
 
-        public TicTacToe(RebbitService rebbitService)
+        public TicTacToe(RebbitService? rebbitService = null)
         {
             _rebbitService = rebbitService;
         }
@@ -111,6 +111,10 @@ namespace roomfyChat.Games
 
         public async Task HandleWalk(ITelegramBotClient botClient, string indexArray, long userId)
         {
+            if (_rebbitService == null)
+                throw new InvalidOperationException("Rabbit service not initialized");
+
+
             if (dbRedis.HashGet("TicTacToe", userId).ToString() == "wait")
             {
                 await botClient.SendMessage(userId, "Зараз не ваш хід, зачекайте будьласка");
@@ -126,7 +130,7 @@ namespace roomfyChat.Games
 
                 var json = JsonSerializer.Serialize(message);
 
-                await rebbitService.SendMessage("Roomfy.TicTacToe.SendToSevice", json);
+                await _rebbitService.SendMessage("Roomfy.TicTacToe.SendToSevice", json);
             }
         }
     }

@@ -13,7 +13,7 @@ namespace roomfyChat
         private static ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("localhost:6379");
         private static IDatabase dbRedis = redis.GetDatabase();
 
-        private static TicTacToe ticTacToe = new TicTacToe();
+        private static TicTacToe ticTacToe = new();
 
         private async Task AddUserInWaitingRoom(Message message, ITelegramBotClient botClient)
         {
