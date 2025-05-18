@@ -10,8 +10,8 @@ namespace roomfyChat.MessageBrocker
     {
         Task ErrorQueue();
         Task SendMessage(string routingKey, string message);
-        Task CnsumeMessageTicTacToe(string routingKey, string message);
-        Task CnsumeMessageRockPaperSikers(string routingKey, string message);
-        Task CnsumeMessageLetterByLetter(string routingKey, string message);
+        Task CnsumeMessageTicTacToe(string routingKey);
+        Task CnsumeMessageRockPaperSikers(string routingKey);
+        Task CnsumeMessageLetterByLetter(string routingKey);
     }
 }

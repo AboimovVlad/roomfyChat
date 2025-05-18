@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 
 namespace roomfyChat.Models
 {
-    class DTOTicTacToe
+    class DTOTicTacToeSend
     {
+        public long UserId { get; set; }
+        public string? Index { get; set; }
     }
 }

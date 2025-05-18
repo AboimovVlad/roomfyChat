@@ -1,4 +1,7 @@
-﻿using StackExchange.Redis;
+﻿using roomfyChat.MessageBrocker;
+using roomfyChat.Models;
+using StackExchange.Redis;
+using System.Text.Json;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
@@ -11,27 +14,35 @@ namespace roomfyChat.Games
     {
         private static ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("localhost:6379");
         private static IDatabase dbRedis = redis.GetDatabase();
+
+        private static RebbitService _rebbitService;
+
         private static InlineKeyboardMarkup playingField = new InlineKeyboardMarkup(new[]
         {
             new[]
             {
-                InlineKeyboardButton.WithCallbackData("▪️", "0, 0"),
-                InlineKeyboardButton.WithCallbackData("▪️", "0, 1"),
-                InlineKeyboardButton.WithCallbackData("▪️", "0, 2")
+                InlineKeyboardButton.WithCallbackData("▪️", "0,0"),
+                InlineKeyboardButton.WithCallbackData("▪️", "0,1"),
+                InlineKeyboardButton.WithCallbackData("▪️", "0,2")
             },
             new[]
             {
-                InlineKeyboardButton.WithCallbackData("▪️", "1, 0"),
-                InlineKeyboardButton.WithCallbackData("▪️", "1, 1"),
-                InlineKeyboardButton.WithCallbackData("▪️", "1, 2")
+                InlineKeyboardButton.WithCallbackData("▪️", "1,0"),
+                InlineKeyboardButton.WithCallbackData("▪️", "1,1"),
+                InlineKeyboardButton.WithCallbackData("▪️", "1,2")
             },
             new[]
             {
-                InlineKeyboardButton.WithCallbackData("▪️", "2, 0"),
-                InlineKeyboardButton.WithCallbackData("▪️", "2, 1"),
-                InlineKeyboardButton.WithCallbackData("▪️", "2, 2")
+                InlineKeyboardButton.WithCallbackData("▪️", "2,0"),
+                InlineKeyboardButton.WithCallbackData("▪️", "2,1"),
+                InlineKeyboardButton.WithCallbackData("▪️", "2,2")
             }
         });
+
+        public TicTacToe(RebbitService rebbitService)
+        {
+            _rebbitService = rebbitService;
+        }
 
         public bool IsUserInGame(long userId)
         {
@@ -63,6 +74,14 @@ namespace roomfyChat.Games
             }
         }
 
+        public async Task RefusalForGame(ITelegramBotClient botClient, long userId)
+        {
+            var partnerId = (long)dbRedis.HashGet("anonimChats", userId);
+
+            await botClient.SendMessage(partnerId, "Ваш партнер відказався, брати участь у цій грі.\n" +
+                                                   "Оберіть іншу гру або просто продовжуйте розмовляти😉");
+        }
+
         public async Task StartTicTacToe(ITelegramBotClient botClient, Message message)
         {
             var userId = message.Chat.Id;
@@ -80,18 +99,35 @@ namespace roomfyChat.Games
             });
 
             await botClient.SendMessage(userId, "Гра розпочата! 🎮  \r\n" +
-                                                "Раунд: 1 з 5  \r\n" +
-                                                "Рахунок: ❌ – 0, ⭕ – 0  \r\n" +
                                                 "Ходить: ❌  \r\n" +
-                                                "Ваш символ: [❌]\r\n",
+                                                "Ваш символ: ❌\r\n",
                                                 replyMarkup: playingField);
 
             await botClient.SendMessage(partnerId, "Гра розпочата! 🎮  \r\n" +
-                                                "Раунд: 1 з 5  \r\n" +
-                                                "Рахунок: ❌ – 0, ⭕ – 0  \r\n" +
                                                 "Ходить: ❌  \r\n" +
-                                                "Ваш символ: [⭕]\r\n",
+                                                "Ваш символ: ⭕\r\n",
                                                 replyMarkup: playingField);
+        }
+
+        public async Task HandleWalk(ITelegramBotClient botClient, string indexArray, long userId)
+        {
+            if (dbRedis.HashGet("TicTacToe", userId).ToString() == "wait")
+            {
+                await botClient.SendMessage(userId, "Зараз не ваш хід, зачекайте будьласка");
+                return;
+            }
+            else
+            {
+                var message = new DTOTicTacToeSend
+                {
+                    UserId = userId,
+                    Index = indexArray
+                };
+
+                var json = JsonSerializer.Serialize(message);
+
+                await rebbitService.SendMessage("Roomfy.TicTacToe.SendToSevice", json);
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using StackExchange.Redis;
+﻿using roomfyChat.Games;
+using StackExchange.Redis;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
@@ -11,6 +12,8 @@ namespace roomfyChat
     {
         private static ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("localhost:6379");
         private static IDatabase dbRedis = redis.GetDatabase();
+
+        private static TicTacToe ticTacToe = new TicTacToe();
 
         private async Task AddUserInWaitingRoom(Message message, ITelegramBotClient botClient)
         {
@@ -81,7 +84,8 @@ namespace roomfyChat
                 }
                 else if(message.Type == MessageType.Text && message.Text.ToLower().Contains("/starttictactoe"))
                 {
-
+                    await ticTacToe.QwestionForStartGame(botClient, message);
+                    return;
                 }
 
                 switch (message.Type)

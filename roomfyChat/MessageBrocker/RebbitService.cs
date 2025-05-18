@@ -5,11 +5,14 @@ using System.Text;
 using System.Threading.Tasks;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using roomfyChat.Games;
 
 namespace roomfyChat.MessageBrocker
 {
     class RebbitService : IRebbitService
     {
+        private static TicTacToe ticTacToe = new TicTacToe();
+
         private readonly IChannel _channel;
         private readonly string exchange = "RoomfyQueue";
         private readonly string type = ExchangeType.Topic;
@@ -58,17 +61,17 @@ namespace roomfyChat.MessageBrocker
                                              routingKey: routingKey,
                                              body: body);
         }
-        public Task CnsumeMessageLetterByLetter(string routingKey, string message)
+        public Task CnsumeMessageLetterByLetter(string routingKey)
         {
             throw new NotImplementedException();
         }
 
-        public Task CnsumeMessageRockPaperSikers(string routingKey, string message)
+        public Task CnsumeMessageRockPaperSikers(string routingKey)
         {
             throw new NotImplementedException();
         }
 
-        public Task CnsumeMessageTicTacToe(string routingKey, string message)
+        public Task CnsumeMessageTicTacToe(string routingKey)
         {
             throw new NotImplementedException();
         }

@@ -1,8 +1,11 @@
-﻿using Telegram.Bot;
+﻿using roomfyChat.Games;
+using roomfyChat.MessageBrocker;
+using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
+using RabbitMQ.Client;
 
 namespace roomfyChat
 {
@@ -38,14 +41,26 @@ namespace roomfyChat
 
         private static RegistrationData registrationData = new RegistrationData();
         private static AnonimChatLogic anonimChat = new AnonimChatLogic();
+        private static TicTacToe ticTacToe;
+        private static RebbitService rebbitService;
         
         private static Message? newMessageId;
 
-        internal static void Main(string[] args)
+        internal static async Task Main(string[] args)
         {
             var client = new TelegramBotClient("8068346833:AAGLjXMkf6BJ3lMannkocLTasMTGIOCiy8M");
             client.StartReceiving(update,error);
             Console.WriteLine("Bot Starting");
+
+            var factory = new ConnectionFactory { HostName = "localhost" };
+            var connection = await factory.CreateConnectionAsync();
+            var channel = await connection.CreateChannelAsync();
+
+            rebbitService = new RebbitService(channel);
+            ticTacToe = new TicTacToe(rebbitService);
+
+            await rebbitService.ErrorQueue();
+            await rebbitService.CnsumeMessageTicTacToe(routingKey: "Roomfy.TicTacToe.ConsumeMessage");
 
             Console.ReadLine();
         }
@@ -219,6 +234,18 @@ namespace roomfyChat
                                                         replyMarkup: menuMarkup);
                         }
                     }
+                }
+                else if (callbackData == "dontTicTacToe")
+                {
+                    await ticTacToe.RefusalForGame(botClient, chatId);
+                }
+                else if (callbackData == "startTicTacToe")
+                {
+                    await ticTacToe.StartTicTacToe(botClient, callbackQuery.Message);
+                }
+                else if (ticTacToe.IsUserInGame(chatId))
+                {
+                    await ticTacToe.HandleWalk(botClient, callbackData, chatId);
                 }
 
                 await botClient.AnswerCallbackQuery(callbackQuery.Id);
