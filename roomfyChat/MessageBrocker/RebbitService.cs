@@ -14,12 +14,14 @@ namespace roomfyChat.MessageBrocker
         private static TicTacToe ticTacToe = new TicTacToe();
 
         private readonly IChannel _channel;
-        private readonly string exchange = "RoomfyQueue";
-        private readonly string type = ExchangeType.Topic;
+        private readonly string exchange;
+        private readonly string type;
 
         public RebbitService(IChannel channel)
         {
             _channel = channel;
+            exchange = "RoomfyQueue";
+            type = ExchangeType.Topic;
         }
 
         public async Task ErrorQueue()

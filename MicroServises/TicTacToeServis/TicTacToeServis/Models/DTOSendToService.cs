@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace roomfyChat.Models
+namespace TicTacToeServis.Models
 {
-    class DTOTicTacToeConsume
+    class DTOSendToService
     {
         public long UserId { get; set; }
         public long? PartnerId { get; set; }
