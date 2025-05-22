@@ -13,6 +13,6 @@ namespace roomfyChat.Models
         public string[][]? ArrayPlayFild { get; set; }
         public string GameState { get; set; }
         public string? Message { get; set; }
-        public int? WinerrSymbol { get; set; }
+        public string? WinerrSymbol { get; set; }
     }
 }

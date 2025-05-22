@@ -63,19 +63,79 @@ namespace roomfyChat.MessageBrocker
                                              routingKey: routingKey,
                                              body: body);
         }
-        public Task CnsumeMessageLetterByLetter(string routingKey)
+        public async Task CnsumeMessageLetterByLetter(string routingKey)
         {
-            throw new NotImplementedException();
+            await _channel.ExchangeDeclareAsync(exchange: exchange,
+                                                type: type);
+
+            var declareOk = await _channel.QueueDeclareAsync();
+            var queueName = declareOk.QueueName;
+            await _channel.QueueBindAsync(queue: queueName,
+                                          exchange: exchange,
+                                          routingKey);
+
+            var consumer = new AsyncEventingBasicConsumer(channel: _channel);
+            consumer.ReceivedAsync += async (sender, ea) =>
+            {
+                var body = ea.Body.ToArray();
+                var message = Encoding.UTF8.GetString(body);
+                // mehtod for cheking update
+                Console.WriteLine("server geting message from Tic Tac Toe");
+            };
+
+            await _channel.BasicConsumeAsync(queue: queueName,
+                                             autoAck: true,
+                                             consumer: consumer);
         }
 
-        public Task CnsumeMessageRockPaperSikers(string routingKey)
+        public async Task CnsumeMessageRockPaperSikers(string routingKey)
         {
-            throw new NotImplementedException();
+            await _channel.ExchangeDeclareAsync(exchange: exchange,
+                                                type: type);
+
+            var declareOk = await _channel.QueueDeclareAsync();
+            var queueName = declareOk.QueueName;
+            await _channel.QueueBindAsync(queue: queueName,
+                                          exchange: exchange,
+                                          routingKey);
+
+            var consumer = new AsyncEventingBasicConsumer(channel: _channel);
+            consumer.ReceivedAsync += async (sender, ea) =>
+            {
+                var body = ea.Body.ToArray();
+                var message = Encoding.UTF8.GetString(body);
+                // mehtod for cheking update
+                Console.WriteLine("server geting message from Tic Tac Toe");
+            };
+
+            await _channel.BasicConsumeAsync(queue: queueName,
+                                             autoAck: true,
+                                             consumer: consumer);
         }
 
-        public Task CnsumeMessageTicTacToe(string routingKey)
+        public async Task CnsumeMessageTicTacToe(string routingKey)
         {
-            throw new NotImplementedException();
+            await _channel.ExchangeDeclareAsync(exchange: exchange,
+                                                type: type);
+
+            var declareOk = await _channel.QueueDeclareAsync();
+            var queueName = declareOk.QueueName;
+            await _channel.QueueBindAsync(queue: queueName,
+                                          exchange: exchange,
+                                          routingKey);
+
+            var consumer = new AsyncEventingBasicConsumer(channel: _channel);
+            consumer.ReceivedAsync += async (sender, ea) =>
+            {
+                var body = ea.Body.ToArray();
+                var message = Encoding.UTF8.GetString(body);
+                await ticTacToe.ProcesingMessage(message);
+                Console.WriteLine("server geting message from Tic Tac Toe");
+            };
+
+            await _channel.BasicConsumeAsync(queue: queueName,
+                                             autoAck: true,
+                                             consumer: consumer);
         }
     }
 }

@@ -133,5 +133,10 @@ namespace roomfyChat.Games
                 await _rebbitService.SendMessage("Roomfy.TicTacToe.SendToSevice", json);
             }
         }
+
+        public async Task ProcesingMessage(string message)
+        {
+
+        }
     }
 }

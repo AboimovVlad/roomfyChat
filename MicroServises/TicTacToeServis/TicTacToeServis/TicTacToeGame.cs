@@ -49,7 +49,7 @@ namespace TicTacToeServis
 
                     if (UserHasPlayingField(userId: userId) && UserHasPlayingField(userId: partnerId))
                     {
-                        // тут будет методи обработки побед и всей логики игры
+                        await HandleMove(userId, partnerId, userAnswer.Index);
                     }
                     else
                     {
@@ -127,8 +127,13 @@ namespace TicTacToeServis
                             new HashEntry(userId, jsonUserPlayField),
                             new HashEntry(partnerId, jsonPartnerPlayField)
                         });
+                        dbRedis.HashSet("TicTacToe", new HashEntry[]
+                        {
+                            new HashEntry(userId, "wait"),
+                            new HashEntry(partnerId, "walk")
+                        });
 
-                        await HandleWinOrDraw(userId);
+                        await HandleWinOrDraw(userId, partnerId, userRole);
 
                         Console.WriteLine($"Удачный ход по координатам: {row},{col}");
                     }
@@ -142,11 +147,16 @@ namespace TicTacToeServis
                         };
                         var jsonMessage = JsonSerializer.Serialize(message); 
 
-                        await _rabbitService.SendMessage(routingKey: "Roomfy.TicTacToe.ConsumeFromSevice",
+                        await _rabbitService.SendMessage(routingKey: "Roomfy.TicTacToe.ConsumeMessage",
                                                          message: jsonMessage);
 
                         Console.WriteLine("Ячейка занята");
                     }
+                }
+                else
+                {
+                    Console.WriteLine("игровое поле не найдено");
+                    await _rabbitService.SendError("Tic Tac Toe игровое поле не найдено");
                 }
             }
             catch (Exception ex)
@@ -156,9 +166,154 @@ namespace TicTacToeServis
             }
         }
 
-        private async Task HandleWinOrDraw(long userId, string index)
+        private async Task HandleWinOrDraw(long userId, long partnerId, string userSymbol)
         {
+            try
+            {
+                var jsonUserPlayField = dbRedis.HashGet("TicTacToePlayField", userId);
 
+                if (!jsonUserPlayField.IsNullOrEmpty)
+                {
+                    var userPlayField = JsonSerializer.Deserialize<string?[][]>(jsonUserPlayField);
+
+                    // horizontal
+                    if (userPlayField[0][0] == userPlayField[0][1] && userPlayField[0][1] == userPlayField[0][2])
+                    {
+                        if (userPlayField[0][0] != null)
+                        {
+                            await SendWin(userId, partnerId, userPlayField, userSymbol);
+                            Console.WriteLine($"выиграл пользователь {userId} с символом {userSymbol}");
+                        }
+                    }
+                    else if (userPlayField[1][0] == userPlayField[1][1] && userPlayField[1][1] == userPlayField[1][2])
+                    {
+                        if (userPlayField[1][0] != null)
+                        {
+                            await SendWin(userId, partnerId, userPlayField, userSymbol);
+                            Console.WriteLine($"выиграл пользователь {userId} с символом {userSymbol}");
+                        }
+                    }
+                    else if (userPlayField[2][0] == userPlayField[2][1] && userPlayField[2][1] == userPlayField[2][2])
+                    {
+                        if (userPlayField[2][0] != null)
+                        {
+                            await SendWin(userId, partnerId, userPlayField, userSymbol);
+                            Console.WriteLine($"выиграл пользователь {userId} с символом {userSymbol}");
+                        }
+                    }//vertical
+                    else if (userPlayField[0][0] == userPlayField[1][0] && userPlayField[1][0] == userPlayField[2][0])
+                    {
+                        if (userPlayField[0][0] != null)
+                        {
+                            await SendWin(userId, partnerId, userPlayField, userSymbol);
+                            Console.WriteLine($"выиграл пользователь {userId} с символом {userSymbol}");
+                        }
+                    }
+                    else if (userPlayField[0][1] == userPlayField[1][1] && userPlayField[1][1] == userPlayField[2][1])
+                    {
+                        if (userPlayField[0][1] != null)
+                        {
+                            await SendWin(userId, partnerId, userPlayField, userSymbol);
+                            Console.WriteLine($"выиграл пользователь {userId} с символом {userSymbol}");
+                        }
+                    }
+                    else if (userPlayField[0][2] == userPlayField[1][2] && userPlayField[1][2] == userPlayField[2][2])
+                    {
+                        if (userPlayField[0][2] != null)
+                        {
+                            await SendWin(userId, partnerId, userPlayField, userSymbol);
+                            Console.WriteLine($"выиграл пользователь {userId} с символом {userSymbol}");
+                        }
+                    }//diagonal
+                    else if (userPlayField[0][0] == userPlayField[1][1] && userPlayField[1][1] == userPlayField[2][2])
+                    {
+                        if (userPlayField[0][0] != null)
+                        {
+                            await SendWin(userId, partnerId, userPlayField, userSymbol);
+                            Console.WriteLine($"выиграл пользователь {userId} с символом {userSymbol}");
+                        }
+                    }
+                    else if (userPlayField[0][2] == userPlayField[1][1] && userPlayField[1][1] == userPlayField[2][0])
+                    {
+                        if (userPlayField[0][2] != null)
+                        {
+                            await SendWin(userId, partnerId, userPlayField, userSymbol);
+                            Console.WriteLine($"выиграл пользователь {userId} с символом {userSymbol}");
+                        }
+                    }
+                    else if (userPlayField.All(row => row.All(cell => cell != null)))
+                    {
+                        await SendDrow(userId, partnerId, userPlayField, userSymbol);
+                        Console.WriteLine($"ничья у пользователей {userId} & {partnerId}");
+                    }
+                    else
+                    {
+                        await SendProcesing(userId, partnerId, userPlayField, userSymbol);
+                        Console.WriteLine($"игра продолжаеться для игроков {userId} & {partnerId}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("игровое поле не найдено");
+                    await _rabbitService.SendError("Tic Tac Toe игровое поле не найдено");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ошибка проверки ошибки: {ex.Message}");
+                await _rabbitService.SendError($"Tic Tac Toe ошибка проверки ошибки: {ex.Message}");
+            }
+        }
+
+        private async Task SendWin(long userId, long partnerId, string?[][] playField, string userSymbol)
+        {
+            var message = new DTOSendToService
+            {
+                UserId = userId,
+                PartnerId = partnerId,
+                ArrayPlayFild = playField,
+                GameState = GameResult.Win.ToString(),
+                WinerrSymbol = userSymbol
+            };
+
+            var jsonMessage = JsonSerializer.Serialize(message);
+
+            await _rabbitService.SendMessage(routingKey: "Roomfy.TicTacToe.ConsumeMessage",
+                                             message: jsonMessage);
+        }
+
+        private async Task SendDrow(long userId, long partnerId, string?[][] playField, string userSymbol)
+        {
+            var message = new DTOSendToService
+            {
+                UserId = userId,
+                PartnerId = partnerId,
+                ArrayPlayFild = playField,
+                GameState = GameResult.Draw.ToString(),
+                WinerrSymbol = userSymbol
+            };
+
+            var jsonMessage = JsonSerializer.Serialize(message);
+
+            await _rabbitService.SendMessage(routingKey: "Roomfy.TicTacToe.ConsumeMessage",
+                                             message: jsonMessage);
+        }
+
+        private async Task SendProcesing(long userId, long partnerId, string?[][] playField, string userSymbol)
+        {
+            var message = new DTOSendToService
+            {
+                UserId = userId,
+                PartnerId = partnerId,
+                ArrayPlayFild = playField,
+                GameState = GameResult.InProgress.ToString(),
+                WinerrSymbol = userSymbol
+            };
+
+            var jsonMessage = JsonSerializer.Serialize(message);
+
+            await _rabbitService.SendMessage(routingKey: "Roomfy.TicTacToe.ConsumeMessage",
+                                             message: jsonMessage);
         }
     }
 }
